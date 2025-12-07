@@ -183,9 +183,7 @@ export class ShareXServer {
         }
 
         this.#debug(`File ${filename} requested by ${req.ip}`);
-        const exists = await access(`${this.#fsPath}/${filename}`)
-            .then(() => true)
-            .catch(() => false);
+        const exists = await this.#checkFileExists(`${filename}`);
 
         if (!exists) {
             this.#debug(`The requested file ${filename} does not exist`);
