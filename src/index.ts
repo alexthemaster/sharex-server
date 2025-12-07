@@ -65,7 +65,7 @@ export class ShareXServer {
 
     #startServer() {
         // SXCU configuration route
-        if (this.enableSxcu) {
+        if (this.enableSxcu == true) {
             this.#server.get(`${this.baseUrl}api/sxcu`, (req, res) => {
                 this.#debug(`SXCU configuration requested by ${req.ip}`);
                 const sxcu = {
