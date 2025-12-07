@@ -68,7 +68,7 @@ export class ShareXServer {
 
     #startServer() {
         // SXCU configuration route
-        if (this.enableSxcu == true) {
+        if (this.enableSxcu) {
             this.#server.get(`${this.baseUrl}api/sxcu`, (req, res) => {
                 this.#debug(`SXCU configuration requested by ${req.ip}`);
                 const sxcu = {
@@ -119,7 +119,7 @@ export class ShareXServer {
                         : ""
                 }
                 ${
-                    this.enableSxcu == true
+                    this.enableSxcu
                         ? `<br><a href="${this.baseUrl}api/sxcu">Download the .sxcu configuration file</a>`
                         : ""
                 }`
@@ -166,15 +166,16 @@ export class ShareXServer {
 
                         cb(
                             null,
-                            `${name}.${
-                                file.mimetype.split("/")[1] == "plain"
-                                    ? "txt"
-                                    : file.mimetype.split("/")[1]
+                            `${name}${
+                                file.originalname.split(".").length > 1
+                                    ? "." + file.originalname.split(".").pop()
+                                    : ""
                             }`
                         );
                     },
                 }),
             }).single("file"),
+            // This returns the URL to the user
             (req, res) => this.#uploadFile(req, res)
         );
 

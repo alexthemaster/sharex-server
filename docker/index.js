@@ -6,8 +6,8 @@ new ShareXServer({
     baseUrl: process.env.BASE_URL,
     port: process.env.PORT,
     fileLength: process.env.LENGTH,
-    enableSxcu: process.env.ENABLE_SXCU,
-    forceHttps: process.env.FORCE_HTTPS,
+    enableSxcu: JSON.parse(process.env.ENABLE_SXCU.toLowerCase()) ?? true,
+    forceHttps: JSON.parse(process.env.FORCE_HTTPS.toLowerCase()) ?? false,
     fileListing: process.env.FILELISTING,
-    debug: process.env.DEBUG,
+    debug: JSON.parse(process.env.DEBUG.toLowerCase()) ?? false,
 });
