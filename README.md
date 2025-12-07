@@ -25,14 +25,15 @@ A tiny, self-hosted upload target for ShareX and similar clients. Runs on Node.j
 
 All options accepted by the `ShareXServer` constructor:
 
--   `password` (string) — REQUIRED. The password clients must send as the `x-password` header to upload files.
--   `port` (number, default `8080`) — TCP port the server listens on.
--   `baseUrl` (string, default `/`) — Base URL the server will run on.
--   `savePath` (string, default `./uploads`) — Filesystem directory where uploads are stored. The server ensures this directory exists. On Windows prefer an absolute path to avoid a leading `/` being prefixed when resolving.
--   `filenameLength` (number, default `10`) — Length passed to `nanoid()` used to generate short random filenames.
--   `enableSxcu` (boolean, default `false`) — When `true` the server exposes a simple endpoint to get a downloadable .sxcu at `GET /api/sxcu`.
--   `fileListing` (string | false, default `files`) — Path to file listing of uploads. Set to `false` to disable the listing.
--   `debug` (boolean, default `false`) — Enable verbose debug logging to the console.
+-   `password` (string) - REQUIRED. The password clients must send as the `x-password` header to upload files.
+-   `port` (number, default `8080`) - TCP port the server listens on.
+-   `baseUrl` (string, default `/`) - Base URL the server will run on.
+-   `savePath` (string, default `./uploads`) - Filesystem directory where uploads are stored. The server ensures this directory exists. On Windows prefer an absolute path to avoid a leading `/` being prefixed when resolving.
+-   `filenameLength` (number, default `10`) - Length passed to `nanoid()` used to generate short random filenames.
+-   `enableSxcu` (boolean, default `false`) - When `true` the server exposes a simple endpoint to get a downloadable .sxcu at `GET /api/sxcu`.
+-   `fileListing` (string | false, default `files`) - Path to file listing of uploads. Set to `false` to disable the listing.
+-   `debug` (boolean, default `false`) - Enable verbose debug logging to the console.
+-   `forceHttps` (boolean, default `false`) - Force HTTPS for return URL (useful when running behind reverse proxy)
 
 Usage notes:
 

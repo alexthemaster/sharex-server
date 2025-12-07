@@ -14,6 +14,7 @@ export class ShareXServer {
     public enableSxcu: boolean;
     public debug: boolean;
     public fileListing: string | false;
+    public forceHttps: boolean;
     #server = express();
     #password: string;
     #fsPath: string;
@@ -27,6 +28,7 @@ export class ShareXServer {
         enableSxcu = false,
         fileListing = "files",
         debug = false,
+        forceHttps = false,
     }: SharexServerOptions) {
         this.port = port;
         // Ensure baseUrl starts and ends with /
@@ -36,6 +38,7 @@ export class ShareXServer {
         this.filenameLength = filenameLength;
         this.enableSxcu = enableSxcu;
         this.debug = debug;
+        this.forceHttps = forceHttps;
         // If fileListing is provided, ensure it doesn't start with a /
         this.fileListing = fileListing
             ? fileListing.startsWith("/")
@@ -74,7 +77,9 @@ export class ShareXServer {
                     DestinationType:
                         "ImageUploader, TextUploader, FileUploader",
                     RequestMethod: "POST",
-                    RequestURL: `${req.protocol}://${req.host}${this.baseUrl}api/upload`,
+                    RequestURL: `${
+                        this.forceHttps ? "https" : req.protocol
+                    }://${req.host}${this.baseUrl}api/upload`,
                     Body: "MultipartFormData",
                     Headers: {
                         "X-Password": this.#password,
@@ -217,7 +222,9 @@ export class ShareXServer {
         );
         return res.end(
             JSON.stringify({
-                url: `http://${req.host}${this.baseUrl}${req.file?.filename}`,
+                url: `${this.forceHttps ? "https" : req.protocol}://${
+                    req.host
+                }${this.baseUrl}${req.file?.filename}`,
             })
         );
     }
@@ -283,4 +290,6 @@ export interface SharexServerOptions {
     fileListing?: string | false;
     /** Enable debug logging */
     debug?: boolean;
+    /** Force HTTPS in return URL (useful when running behind reverse proxy) */
+    forceHttps?: boolean;
 }

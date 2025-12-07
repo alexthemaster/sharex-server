@@ -52,6 +52,12 @@ The ShareX Server Docker image can be configured via the following environment v
     -   Default: `true`
     -   Example: `ENABLE_SXCU=true`
 
+-   **FORCE_HTTPS**
+
+    -   Description: Force HTTPS in return URL (useful when running behind reverse proxy)
+    -   Default: `false`
+    -   Example: `FORCE_HTTPS=true`
+
 -   **DEBUG**
 
     -   Description: Enables debug logging. Set to `true` to log detailed server activity.
