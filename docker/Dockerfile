@@ -1,20 +1,25 @@
-FROM node:18-alpine
+FROM node:lts-alpine
 
-# Set the working directory
 WORKDIR /server
 
-# Install the latest version of ShareX-Server from NPM
-RUN npm install sharex-server
+COPY package*.json ./
+RUN mkdir ./src
+COPY src ./src
+COPY tsconfig.json ./
+COPY docker/index.js ./
 
-# Copy the JS file to the container
-COPY "./run.js" "./run.js"
+RUN npm ci
 
-# Expose port 80 outside of the container
-EXPOSE 80
+RUN npm run build
 
-# Set the default ENV parameters
-ENV PASSWORD password
-ENV UPLOADS_PATH /uploads
-ENV LENGTH 10
+EXPOSE 8080
 
-CMD ["node", "run.js"]
+ENV PORT 8080
+ENV BASE_URL /
+ENV SAVE_PATH /uploads
+ENV FILENAME_LENGTH 10
+ENV ENABLE_SXCU true
+ENV DEBUG FALSE
+ENV FILE_LISTING /files
+
+CMD ["node", "index.js"]
