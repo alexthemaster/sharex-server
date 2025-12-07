@@ -51,7 +51,7 @@ export class ShareXServer {
         }
         this.#password = password;
 
-        this.#fsPath = join("/", this.savePath);
+        this.#fsPath = join("./", this.savePath);
         this.#ensureSavePath(this.#fsPath).then(() => {
             return this.#startServer();
         });
