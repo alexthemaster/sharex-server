@@ -64,12 +64,13 @@ export class ShareXServer {
     }
 
     #startServer() {
+        // SXCU configuration route
         if (this.enableSxcu) {
             this.#server.get(`${this.baseUrl}api/sxcu`, (req, res) => {
                 this.#debug(`SXCU configuration requested by ${req.ip}`);
                 const sxcu = {
                     Version: "18.0.0",
-                    Name: `ShareX Server`,
+                    Name: `ShareX Server (${req.host})`,
                     DestinationType:
                         "ImageUploader, TextUploader, FileUploader",
                     RequestMethod: "POST",
@@ -93,6 +94,7 @@ export class ShareXServer {
             });
         }
 
+        // File listing route
         if (this.fileListing) {
             this.#server.get(
                 `${this.baseUrl}${this.fileListing}`,
@@ -100,6 +102,7 @@ export class ShareXServer {
             );
         }
 
+        // Base route
         this.#server.get(this.baseUrl, (_req, res) => {
             res.send(
                 `<a href="https://github.com/alexthemaster/sharex-server" target=_blank>ShareX Server</a> is running. ${
@@ -114,8 +117,7 @@ export class ShareXServer {
                     this.enableSxcu
                         ? `<br><a href="${this.baseUrl}api/sxcu">Download the .sxcu configuration file</a>`
                         : ""
-                }
-      `
+                }`
             );
         });
 
@@ -144,6 +146,7 @@ export class ShareXServer {
                 }
                 return next();
             },
+            //   Handle the file upload
             multer({
                 storage: diskStorage({
                     destination: (_req, _file, cb) => {
@@ -170,11 +173,13 @@ export class ShareXServer {
             (req, res) => this.#uploadFile(req, res)
         );
 
+        // Start listening
         this.#server.listen(this.port, () => {
             console.log(`[Info] ShareX server started on port ${this.port}`);
         });
     }
 
+    /** Streams a requested file to the client if it exists */
     async #getFile(req: Request, res: Response) {
         const { filename } = req.params;
         if (!filename) {
@@ -183,7 +188,7 @@ export class ShareXServer {
         }
 
         this.#debug(`File ${filename} requested by ${req.ip}`);
-        const exists = await this.#checkFileExists(`${filename}`);
+        const exists = await this.#checkFileExists(filename);
 
         if (!exists) {
             this.#debug(`The requested file ${filename} does not exist`);
@@ -196,6 +201,7 @@ export class ShareXServer {
         return file.pipe(res);
     }
 
+    /** Handles file uploads and returns the file URL if successful. */
     async #uploadFile(req: Request, res: Response) {
         if (!req.file) {
             this.#debug(`Upload attempt with no file from ${req.ip}`);
@@ -216,6 +222,7 @@ export class ShareXServer {
         );
     }
 
+    /** Ensures the save path exists, creates it if it doesn't */
     async #ensureSavePath(path: string) {
         this.#debug(`Checking if save path exists at ${path}`);
         try {
@@ -237,6 +244,7 @@ export class ShareXServer {
         }
     }
 
+    /** Handles file listing requests */
     async #handleFileListing(_req: Request, res: Response, baseUrl: string) {
         this.#debug(`File listing requested by ${_req.ip}`);
         const files = await readdir(this.#fsPath);
