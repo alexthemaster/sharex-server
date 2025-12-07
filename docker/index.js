@@ -4,7 +4,7 @@ const { ShareXServer } = require("./dist/index.js");
 new ShareXServer({
     password: process.env.PASSWORD,
     baseUrl: process.env.BASE_URL,
-    port: 80,
+    port: process.env.PORT,
     fileLength: process.env.LENGTH,
     enableSxcu: process.env.ENABLE_SXCU,
     fileListing: process.env.FILELISTING,
