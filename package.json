@@ -13,7 +13,7 @@
   "homepage": "https://github.com/alexthemaster/sharex-server#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/alexthemaster/sharex-server.git"
+    "url": "git+https://github.com/alexthemaster/sharex-server.git"
   },
   "bugs": {
     "url": "https://github.com/alexthemaster/sharex-server/issues"
