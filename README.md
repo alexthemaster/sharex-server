@@ -105,7 +105,7 @@ curl -X POST "http://localhost:8080/api/upload" \
 
 ## Troubleshooting & notes
 
--   The code sets `this.#fsPath = join("/", this.savePath)`. On Windows this will produce a path prefixed with `/` which can behave differently than expected. If you encounter path problems on Windows, set `savePath` to an absolute Windows path (e.g. `C:\data\uploads`).
+-   The code sets `this.#fsPath = join("./", this.savePath)`. If you encounter path problems on Windows, set `savePath` to an absolute Windows path (e.g. `C:\data\uploads`).
 -   Ensure the Node process has permission to create and write to `savePath`.
 
 ---
