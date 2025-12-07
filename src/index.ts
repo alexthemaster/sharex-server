@@ -114,7 +114,7 @@ export class ShareXServer {
                         : ""
                 }
                 ${
-                    this.enableSxcu
+                    this.enableSxcu == true
                         ? `<br><a href="${this.baseUrl}api/sxcu">Download the .sxcu configuration file</a>`
                         : ""
                 }`
