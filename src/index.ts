@@ -1,0 +1,286 @@
+import express, { Request, Response } from "express";
+import { lookup } from "mime-types";
+import multer, { diskStorage } from "multer";
+import { nanoid } from "nanoid";
+import { createReadStream } from "node:fs";
+import { access, constants, mkdir, readdir, stat } from "node:fs/promises";
+import { join } from "node:path";
+
+export class ShareXServer {
+    public port: number;
+    public baseUrl: string;
+    public savePath: string;
+    public filenameLength: number;
+    public enableSxcu: boolean;
+    public debug: boolean;
+    public fileListing: string | false;
+    #server = express();
+    #password: string;
+    #fsPath: string;
+
+    constructor({
+        port = 8080,
+        password,
+        baseUrl = "/",
+        savePath = "./uploads",
+        filenameLength = 10,
+        enableSxcu = false,
+        fileListing = "files",
+        debug = false,
+    }: SharexServerOptions) {
+        this.port = port;
+        // Ensure baseUrl starts and ends with /
+        this.baseUrl =
+            baseUrl == "/" ? baseUrl : `/${baseUrl.replace("/", "")}/`;
+        this.savePath = savePath;
+        this.filenameLength = filenameLength;
+        this.enableSxcu = enableSxcu;
+        this.debug = debug;
+        // If fileListing is provided, ensure it doesn't start with a /
+        this.fileListing = fileListing
+            ? fileListing.startsWith("/")
+                ? fileListing.substring(1)
+                : fileListing
+            : false;
+
+        if (!password) {
+            console.error(
+                "[Error] A password must be provided to start the server."
+            );
+            process.exit(1);
+        }
+        this.#password = password;
+
+        this.#fsPath = join("./", this.savePath);
+        this.#ensureSavePath(this.#fsPath).then(() => {
+            return this.#startServer();
+        });
+    }
+
+    #debug(str: string) {
+        if (this.debug) {
+            console.debug("[Debug]", str);
+        }
+    }
+
+    #startServer() {
+        // SXCU configuration route
+        if (this.enableSxcu) {
+            this.#server.get(`${this.baseUrl}api/sxcu`, (req, res) => {
+                this.#debug(`SXCU configuration requested by ${req.ip}`);
+                const sxcu = {
+                    Version: "18.0.0",
+                    Name: `ShareX Server (${req.host})`,
+                    DestinationType:
+                        "ImageUploader, TextUploader, FileUploader",
+                    RequestMethod: "POST",
+                    RequestURL: `${req.protocol}://${req.host}${this.baseUrl}api/upload`,
+                    Body: "MultipartFormData",
+                    Headers: {
+                        "X-Password": this.#password,
+                    },
+                    FileFormName: "file",
+                    URL: "{json:url}",
+                    ErrorMessage: "{json:error}",
+                };
+
+                return res
+                    .set("Content-Type", "application/octet-stream")
+                    .set(
+                        "Content-Disposition",
+                        "attachment;filename=sharex-server.sxcu"
+                    )
+                    .end(JSON.stringify(sxcu));
+            });
+        }
+
+        // File listing route
+        if (this.fileListing) {
+            this.#server.get(
+                `${this.baseUrl}${this.fileListing}`,
+                (_req, res) => this.#handleFileListing(_req, res, this.baseUrl)
+            );
+        }
+
+        // Base route
+        this.#server.get(this.baseUrl, (_req, res) => {
+            res.send(
+                `<a href="https://github.com/alexthemaster/sharex-server" target=_blank>ShareX Server</a> is running. ${
+                    this.fileListing
+                        ? "Visit <a href=" +
+                          this.baseUrl +
+                          this.fileListing +
+                          ">here</a> to see the file listing."
+                        : ""
+                }
+                ${
+                    this.enableSxcu
+                        ? `<br><a href="${this.baseUrl}api/sxcu">Download the .sxcu configuration file</a>`
+                        : ""
+                }`
+            );
+        });
+
+        // Get file
+        this.#server.get(`${this.baseUrl}:filename`, (req, res) =>
+            this.#getFile(req, res)
+        );
+
+        // Upload file
+        this.#server.post(
+            `${this.baseUrl}api/upload`,
+            //   Make sure only authorized users can upload
+            (req, res, next) => {
+                if (
+                    !req.headers["x-password"] ||
+                    req.headers["x-password"] !== this.#password
+                ) {
+                    this.#debug(`Unauthorized upload attempt from ${req.ip}`);
+                    return res.status(401).end(
+                        JSON.stringify({
+                            error: `Unauthorized. Provide a${
+                                req.headers["x-password"] ? " valid" : ""
+                            } password.`,
+                        })
+                    );
+                }
+                return next();
+            },
+            //   Handle the file upload
+            multer({
+                storage: diskStorage({
+                    destination: (_req, _file, cb) => {
+                        cb(null, this.#fsPath);
+                    },
+                    filename: async (_req, file, cb) => {
+                        let name = nanoid(this.filenameLength);
+                        // Little safeguard to prevent overwriting files (although extremely unlikely https://zelark.github.io/nano-id-cc/)
+                        if (await this.#checkFileExists(name)) {
+                            name = nanoid(this.filenameLength);
+                        }
+
+                        cb(
+                            null,
+                            `${name}.${
+                                file.mimetype.split("/")[1] == "plain"
+                                    ? "txt"
+                                    : file.mimetype.split("/")[1]
+                            }`
+                        );
+                    },
+                }),
+            }).single("file"),
+            (req, res) => this.#uploadFile(req, res)
+        );
+
+        // Start listening
+        this.#server.listen(this.port, () => {
+            console.log(`[Info] ShareX server started on port ${this.port}`);
+        });
+    }
+
+    /** Streams a requested file to the client if it exists */
+    async #getFile(req: Request, res: Response) {
+        const { filename } = req.params;
+        if (!filename) {
+            this.#debug(`File request with no filename from ${req.ip}`);
+            return res.status(400).send("No filename provided.");
+        }
+
+        this.#debug(`File ${filename} requested by ${req.ip}`);
+        const exists = await this.#checkFileExists(filename);
+
+        if (!exists) {
+            this.#debug(`The requested file ${filename} does not exist`);
+            return res.status(404).send("The requested file does not exist.");
+        }
+
+        this.#debug(`Serving file ${filename} to ${req.ip}`);
+        const file = createReadStream(`${this.#fsPath}/${filename}`);
+        res.set("Content-Type", lookup(filename) || "application/octet-stream");
+        return file.pipe(res);
+    }
+
+    /** Handles file uploads and returns the file URL if successful. */
+    async #uploadFile(req: Request, res: Response) {
+        if (!req.file) {
+            this.#debug(`Upload attempt with no file from ${req.ip}`);
+            return res.status(400).end(
+                JSON.stringify({
+                    error: "No file provided.",
+                })
+            );
+        }
+
+        this.#debug(
+            `File ${req.file.filename} uploaded successfully by ${req.ip}`
+        );
+        return res.end(
+            JSON.stringify({
+                url: `http://${req.host}${this.baseUrl}${req.file?.filename}`,
+            })
+        );
+    }
+
+    /** Ensures the save path exists, creates it if it doesn't */
+    async #ensureSavePath(path: string) {
+        this.#debug(`Checking if save path exists at ${path}`);
+        try {
+            this.#debug(`Save path does exist at ${path}`);
+            await access(path, constants.F_OK);
+        } catch {
+            this.#debug(`Save path does not exist at ${path}, creating...`);
+            await mkdir(path, { recursive: true });
+            this.#debug(`Save path created at ${path}`);
+        }
+    }
+
+    async #checkFileExists(filename: string): Promise<boolean> {
+        try {
+            await access(join(this.#fsPath, filename), constants.F_OK);
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    /** Handles file listing requests */
+    async #handleFileListing(_req: Request, res: Response, baseUrl: string) {
+        this.#debug(`File listing requested by ${_req.ip}`);
+        const files = await readdir(this.#fsPath);
+
+        const list = await Promise.all(
+            files.map(
+                async (file: string) =>
+                    `<li><a href="${baseUrl}${file}" target=_blank>${file}</a> - uploaded ${(
+                        await stat(join(this.#fsPath, file))
+                    ).mtime.toLocaleString()}</li>`
+            )
+        );
+
+        return res.set("Content-Type", lookup("html") as string).end(`
+            <ul>
+                ${list.join("\n")}
+            </ul>
+            `);
+    }
+}
+
+export interface SharexServerOptions {
+    /** Password used for uploading */
+    password: string;
+    /** Port number to run the server on, defaults to :8080 */
+    port?: number;
+    /** Base URL of the server, defaults to / */
+    baseUrl?: string;
+    /** Path to save uploaded files, defaults to ./uploads */
+    savePath?: string;
+    /** Length of the generated filenames, defaults to 10 */
+    filenameLength?: number;
+    /** Enable SXCU configuration generation, defaults to false */
+    enableSxcu?: boolean;
+    /** File listing of all uploaded files, defaults to /files */
+    fileListing?: string | false;
+    /** Enable debug logging */
+    debug?: boolean;
+}
