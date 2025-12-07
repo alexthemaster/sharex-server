@@ -1,3 +1,8 @@
 docker
 src
 uploads
+.prettierrc
+.github
+compose.yml
+eslint.config.mjs
+tsconfig.json
