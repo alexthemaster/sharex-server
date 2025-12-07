@@ -15,7 +15,7 @@ services:
             - PASSWORD=yourpasswordhere
         volumes:
             # Change this path if you want to persist uploads elsewhere
-            - ./uploads:/uploads
+            - ./uploads:/server/uploads
         restart: unless-stopped
 ```
 
