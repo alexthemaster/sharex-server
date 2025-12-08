@@ -9,6 +9,8 @@ services:
     sharex-server:
         image: alexthemaster/sharex-server:latest
         container_name: sharex-server
+        # Uncomment the following line to run sharex-server as your user instead of root (change id if different)
+        # user: 1000:1000
         ports:
             - "8080:8080"
         environment:
