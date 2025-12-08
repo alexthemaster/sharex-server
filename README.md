@@ -12,7 +12,7 @@ A tiny, self-hosted upload target for ShareX and similar clients. Runs on Node.j
 
 ## ▶️ Quickstart
 
-### 🐳 Docker is the recommended way to run ShareX-Server! See [Docker Hub](https://hub.docker.com/r/alexthemaster/sharex-server) for setup instructions.
+### 🐳 Docker is the recommended way to run ShareX Server! See [Docker Hub](https://hub.docker.com/r/alexthemaster/sharex-server) for setup instructions.
 
 #### 🔨 Manually in your Node app:
 
