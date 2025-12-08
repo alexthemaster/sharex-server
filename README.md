@@ -1,4 +1,4 @@
-# sharex-server
+# ShareX Server
 
 A tiny, self-hosted upload target for ShareX and similar clients. Runs on Node.js and stores uploads on disk.
 
@@ -8,10 +8,11 @@ A tiny, self-hosted upload target for ShareX and similar clients. Runs on Node.j
 -   Simple files directory listing with configurable endpoint
 -   Downloadable .sxcu file endpoint (/api/sxcu)
 -   Setting Base URL
+-   Custom generated filename length
 
 ## Quickstart
 
-### 🐳 Docker is the recommended way to run Sh ShareX-Server! See [Docker Hub](https://hub.docker.com/r/alexthemaster/sharex-server) for setup instructions.
+### 🐳 Docker is the recommended way to run ShareX-Server! See [Docker Hub](https://hub.docker.com/r/alexthemaster/sharex-server) for setup instructions.
 
 #### Manually in your Node app:
 
