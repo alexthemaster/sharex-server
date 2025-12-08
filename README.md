@@ -11,7 +11,7 @@ A tiny, self-hosted upload target for ShareX and similar clients. Runs on Node.j
 
 ## Quickstart
 
-### Docker is the recommended way to run ShareX-Server! (see [Docker Hub](https://hub.docker.com/r/alexthemaster/sharex-server)).
+### 🐳 Docker is the recommended way to run Sh ShareX-Server! See [Docker Hub](https://hub.docker.com/r/alexthemaster/sharex-server) for setup instructions.
 
 #### Manually in your Node app:
 
@@ -21,7 +21,7 @@ A tiny, self-hosted upload target for ShareX and similar clients. Runs on Node.j
     new ShareXServer({ password: "s3cret", port: 8080, savePath: "./uploads" });
     ```
 
-## Options
+#### Options
 
 All options accepted by the `ShareXServer` constructor:
 
@@ -35,7 +35,7 @@ All options accepted by the `ShareXServer` constructor:
 -   `debug` (boolean, default `false`) - Enable verbose debug logging to the console.
 -   `forceHttps` (boolean, default `false`) - Force HTTPS for return URL (useful when running behind reverse proxy)
 
-Usage notes:
+## Usage notes:
 
 -   The server saves uploaded files directly under `savePath` and will serve any file in that directory - do not point `savePath` at directories containing sensitive data.
 -   The upload flow is protected only by the `x-password` header - run behind HTTPS and/or restrict access with a firewall or reverse proxy for production deployments.
@@ -91,8 +91,8 @@ curl -X POST "http://localhost:8080/api/upload" \
 
 ## Upload handling and filename strategy
 
--   Filenames are generated as: `${nanoid(this.filenameLength)}.${mimeSubtype}` where `mimeSubtype` is taken from the uploaded file's `mimetype.split("/")[1]`.
--   A collision safeguard checks whether a file with the generated name already exists and regenerates once if necessary. The probability of collision is extremely low with `nanoid`.
+-   Filenames are generated as: `${nanoid(this.filenameLength)}.{ext}` where `ext` is the uploaded file's original extension.
+-   A collision safeguard checks whether a file with the generated name already exists and regenerates once if necessary. The probability of collision is [extremely low](https://zelark.github.io/nano-id-cc/) with `nanoid`.
 
 ---
 
