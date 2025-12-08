@@ -40,12 +40,15 @@ All options accepted by the `ShareXServer` constructor:
 
 -   The server saves uploaded files directly under `savePath` and will serve any file in that directory - do not point `savePath` at directories containing sensitive data.
 -   The upload flow is protected only by the `x-password` header - run behind HTTPS and/or restrict access with a firewall or reverse proxy for production deployments.
+-   The code sets `this.#fsPath = join("./", this.savePath)`. If you encounter path problems on Windows, set `savePath` to an absolute Windows path (e.g. `C:\data\uploads`).
+-   Ensure the Node process has permission to create and write to `savePath`.
 
 ## ⬆️ Uploading
 
 -   Endpoint: `POST /api/upload` (multipart form, field name `file`).
 -   Auth: include header `x-password: <your-password>`.
 -   Success response: JSON containing a `url` pointing to the uploaded file.
+- Error response: JSON containing an `error` property with status code 400 for missing file and 401 for missing/incorrect password.
 
 Example (PowerShell / pwsh):
 
@@ -61,15 +64,7 @@ curl -X POST "http://localhost:8080/api/upload" \
     -F "file=@/path/to/file.jpg"
 ```
 
-## 🌐 HTTP Endpoints
-
--   `POST /api/upload`
-
-    -   Purpose: Upload a single file (field name: `file`).
-    -   Auth: Requires header `x-password: <password>`.
-    -   Body: `multipart/form-data` with a single `file` part.
-    -   Response (success): 200 with JSON `{ URL: "http://<host>/<filename>" }`.
-    -   Response (errors): 400 on missing file, 401 on invalid/missing password.
+## 🌐 Additional HTTP Endpoints
 
 -   `GET /:filename`
 
@@ -83,7 +78,7 @@ curl -X POST "http://localhost:8080/api/upload" \
     -   Response: Simple HTML list of links to the uploaded files and their upload dates`.
 
 -   `GET /api/sxcu`
-    -   Purpose: When `enableSXCU` is `true`, will return a .sxcu file to be used with ShareX.
+    -   Purpose: When `enableSxcu` is `true`, will return a .sxcu file to be used with ShareX.
 
 > **Note:** All endpoints take the configured `baseUrl` into account.  
 > This means that every URL, will be prefixed with the `baseUrl` you have configured. (example: `GET /baseUrl/files`)
@@ -95,20 +90,6 @@ curl -X POST "http://localhost:8080/api/upload" \
 -   Filenames are generated as: `${nanoid(this.filenameLength)}.{ext}` where `ext` is the uploaded file's original extension.
 -   A collision safeguard checks whether a file with the generated name already exists and regenerates once if necessary. The probability of collision is [extremely low](https://zelark.github.io/nano-id-cc/) with `nanoid`.
 
----
-
-## 🔐 Security considerations
-
--   The upload endpoint is protected only by the `x-password` header; ensure this password is kept secret and that access is restricted by firewall or reverse proxy as needed.
--   Consider running the server behind HTTPS (reverse proxy like Nginx, Caddy, or a cloud load balancer) to protect the password in transit.
--   Be mindful that the server will serve any file present in the `savePath`; do not use a directory that contains sensitive files.
-
----
-
-## 🛠️ Troubleshooting & notes
-
--   The code sets `this.#fsPath = join("./", this.savePath)`. If you encounter path problems on Windows, set `savePath` to an absolute Windows path (e.g. `C:\data\uploads`).
--   Ensure the Node process has permission to create and write to `savePath`.
 
 ---
 
