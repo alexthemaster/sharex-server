@@ -10,11 +10,11 @@ A tiny, self-hosted upload target for ShareX and similar clients. Runs on Node.j
 -   Setting Base URL
 -   Custom generated filename length
 
-## Quickstart
+## ▶️ Quickstart
 
 ### 🐳 Docker is the recommended way to run ShareX-Server! See [Docker Hub](https://hub.docker.com/r/alexthemaster/sharex-server) for setup instructions.
 
-#### Manually in your Node app:
+#### 🔨 Manually in your Node app:
 
 -   `npm install sharex-server`
 -   ```ts
@@ -22,7 +22,7 @@ A tiny, self-hosted upload target for ShareX and similar clients. Runs on Node.j
     new ShareXServer({ password: "s3cret", port: 8080, savePath: "./uploads" });
     ```
 
-#### Options
+#### ⚙️ Options
 
 All options accepted by the `ShareXServer` constructor:
 
@@ -36,12 +36,12 @@ All options accepted by the `ShareXServer` constructor:
 -   `debug` (boolean, default `false`) - Enable verbose debug logging to the console.
 -   `forceHttps` (boolean, default `false`) - Force HTTPS for return URL (useful when running behind reverse proxy)
 
-## Usage notes:
+## 🗒️ Usage notes:
 
 -   The server saves uploaded files directly under `savePath` and will serve any file in that directory - do not point `savePath` at directories containing sensitive data.
 -   The upload flow is protected only by the `x-password` header - run behind HTTPS and/or restrict access with a firewall or reverse proxy for production deployments.
 
-## Uploading
+## ⬆️ Uploading
 
 -   Endpoint: `POST /api/upload` (multipart form, field name `file`).
 -   Auth: include header `x-password: <your-password>`.
@@ -61,7 +61,7 @@ curl -X POST "http://localhost:8080/api/upload" \
     -F "file=@/path/to/file.jpg"
 ```
 
-## HTTP Endpoints
+## 🌐 HTTP Endpoints
 
 -   `POST /api/upload`
 
@@ -97,7 +97,7 @@ curl -X POST "http://localhost:8080/api/upload" \
 
 ---
 
-## Security considerations
+## 🔐 Security considerations
 
 -   The upload endpoint is protected only by the `x-password` header; ensure this password is kept secret and that access is restricted by firewall or reverse proxy as needed.
 -   Consider running the server behind HTTPS (reverse proxy like Nginx, Caddy, or a cloud load balancer) to protect the password in transit.
@@ -105,13 +105,13 @@ curl -X POST "http://localhost:8080/api/upload" \
 
 ---
 
-## Troubleshooting & notes
+## 🛠️ Troubleshooting & notes
 
 -   The code sets `this.#fsPath = join("./", this.savePath)`. If you encounter path problems on Windows, set `savePath` to an absolute Windows path (e.g. `C:\data\uploads`).
 -   Ensure the Node process has permission to create and write to `savePath`.
 
 ---
 
-## Documentation notice
+## 📌 Documentation notice
 
 This README was produced with the assistance of an AI.
