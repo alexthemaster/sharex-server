@@ -7,7 +7,11 @@ new ShareXServer({
     port: process.env.PORT,
     fileLength: process.env.LENGTH,
     enableSxcu: JSON.parse(process.env.ENABLE_SXCU.toLowerCase()) ?? true,
-    forceHttps: JSON.parse(process.env.FORCE_HTTPS.toLowerCase()) ?? false,
-    fileListing: process.env.FILE_LISTING.toLowerCase() == "false" ? false : process.env.FILE_LISTING,
+    forceHttps: JSON.parse(process.env.FORCE_HTTPS.toLowerCase()) ?? null,
+    trustProxy: JSON.parse(process.env.TRUST_PROXY.toLowerCase()) ?? false,
+    fileListing:
+        process.env.FILE_LISTING.toLowerCase() == "false"
+            ? false
+            : process.env.FILE_LISTING,
     debug: JSON.parse(process.env.DEBUG.toLowerCase()) ?? false,
 });

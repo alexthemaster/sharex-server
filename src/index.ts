@@ -29,6 +29,7 @@ export class ShareXServer {
         fileListing = "files",
         debug = false,
         forceHttps = false,
+        trustProxy,
     }: SharexServerOptions) {
         this.port = port;
         // Ensure baseUrl starts and ends with /
@@ -45,6 +46,14 @@ export class ShareXServer {
                 ? fileListing.substring(1)
                 : fileListing
             : false;
+
+        if (trustProxy) {
+            if (this.forceHttps !== true && this.forceHttps !== false) {
+                this.forceHttps = true;
+            }
+
+            this.#server.set("trust proxy", true);
+        }
 
         if (!password) {
             console.error(
@@ -293,4 +302,11 @@ export interface SharexServerOptions {
     debug?: boolean;
     /** Force HTTPS in return URL (useful when running behind reverse proxy) */
     forceHttps?: boolean;
+    /** Sets Express trust proxy to true
+     *
+     * Useful for getting your X-Forwarded-For IP from reverse proxy
+     *
+     * Also enables forceHttps if not explicitly set to a boolean
+     */
+    trustProxy?: boolean;
 }

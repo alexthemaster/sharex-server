@@ -35,6 +35,7 @@ All options accepted by the `ShareXServer` constructor:
 -   `fileListing` (string | false, default `files`) - Path to file listing of uploads. Set to `false` to disable the listing.
 -   `debug` (boolean, default `false`) - Enable verbose debug logging to the console.
 -   `forceHttps` (boolean, default `false`) - Force HTTPS for return URL (useful when running behind reverse proxy)
+-   `trustProxy` (boolean, default `false`) - Sets Express trust proxy to true; Useful for getting your X-Forwarded-For IP from reverse proxy when running with debug enabled; Also enables forceHttps if not explicitly set to a boolean
 
 ## 🗒️ Usage notes:
 
@@ -48,7 +49,7 @@ All options accepted by the `ShareXServer` constructor:
 -   Endpoint: `POST /api/upload` (multipart form, field name `file`).
 -   Auth: include header `x-password: <your-password>`.
 -   Success response: JSON containing a `url` pointing to the uploaded file.
-- Error response: JSON containing an `error` property with status code 400 for missing file and 401 for missing/incorrect password.
+-   Error response: JSON containing an `error` property with status code 400 for missing file and 401 for missing/incorrect password.
 
 Example (PowerShell / pwsh):
 
@@ -81,7 +82,7 @@ curl -X POST "http://localhost:8080/api/upload" \
     -   Purpose: When `enableSxcu` is `true`, will return a .sxcu file to be used with ShareX.
 
 > **Note:** All endpoints take the configured `baseUrl` into account.  
-> This means that every URL, will be prefixed with the `baseUrl` you have configured. (example: `GET /baseUrl/files`)
+> This means that every URL will be prefixed with the `baseUrl` you have configured. (example: `GET /baseUrl/files`)
 
 ---
 
@@ -90,9 +91,4 @@ curl -X POST "http://localhost:8080/api/upload" \
 -   Filenames are generated as: `${nanoid(this.filenameLength)}.{ext}` where `ext` is the uploaded file's original extension.
 -   A collision safeguard checks whether a file with the generated name already exists and regenerates once if necessary. The probability of collision is [extremely low](https://zelark.github.io/nano-id-cc/) with `nanoid`.
 
-
 ---
-
-## 📌 Documentation notice
-
-This README was produced with the assistance of an AI.

@@ -57,8 +57,14 @@ The ShareX Server Docker image can be configured via the following environment v
 -   **FORCE_HTTPS**
 
     -   Description: Force HTTPS in return URL (useful when running behind reverse proxy)
-    -   Default: `false`
+    -   Default: ` `
     -   Example: `FORCE_HTTPS=true`
+
+-   **TRUST_PROXY**
+
+    -   Description: Sets Express trust proxy to true; Useful for getting your X-Forwarded-For IP from reverse proxy when running with debug enabled; Also enables forceHttps if not explicitly set to a boolean
+    -   Default: `false`
+    -   Example: `TRUST_PROXY=true`
 
 -   **DEBUG**
 
