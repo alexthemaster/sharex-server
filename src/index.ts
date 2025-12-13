@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express, { Request, Response, type NextFunction } from "express";
 import { lookup } from "mime-types";
 import multer, { diskStorage } from "multer";
 import { nanoid } from "nanoid";
@@ -18,6 +18,7 @@ export class ShareXServer {
     #server = express();
     #password: string;
     #fsPath: string;
+    #multer;
 
     constructor({
         port = 8080,
@@ -63,56 +64,55 @@ export class ShareXServer {
         }
         this.#password = password;
 
-        this.#fsPath = join("./", this.savePath);
-        this.#ensureSavePath(this.#fsPath).then(() => {
-            return this.#startServer();
-        });
-    }
+        this.#multer = multer({
+            storage: diskStorage({
+                destination: (_req, _file, cb) => cb(null, this.#fsPath),
+                filename: async (_req, file, cb) => {
+                    let name = nanoid(this.filenameLength);
+                    const extension =
+                        file.originalname.split(".").length > 1
+                            ? "." + file.originalname.split(".").pop()
+                            : "";
 
-    #debug(str: string) {
-        if (this.debug) {
-            console.debug("[Debug]", str);
-        }
+                    // Little safeguard to prevent overwriting files (although extremely unlikely https://zelark.github.io/nano-id-cc/)
+                    if (await this.#checkFileExists(name)) {
+                        name = nanoid(this.filenameLength);
+                    }
+
+                    cb(null, `${name}${extension}`);
+                },
+            }),
+        });
+
+        this.#fsPath = join("./", this.savePath);
+        this.#ensureSavePath().then(() => this.#startServer());
     }
 
     #startServer() {
+        // Get file
+        this.#server.get(`${this.baseUrl}:filename`, this.#getFile);
+
+        // Upload file
+        this.#server.post(
+            `${this.baseUrl}api/upload`,
+            // Make sure only authorized users can upload
+            this.#checkAuth,
+            // Handle the file upload
+            this.#multer.single("file"),
+            // This returns the URL to the user
+            this.#uploadFile
+        );
+
         // SXCU configuration route
         if (this.enableSxcu) {
-            this.#server.get(`${this.baseUrl}api/sxcu`, (req, res) => {
-                this.#debug(`SXCU configuration requested by ${req.ip}`);
-                const sxcu = {
-                    Version: "18.0.0",
-                    Name: `ShareX Server (${req.host})`,
-                    DestinationType:
-                        "ImageUploader, TextUploader, FileUploader",
-                    RequestMethod: "POST",
-                    RequestURL: `${
-                        this.forceHttps ? "https" : req.protocol
-                    }://${req.host}${this.baseUrl}api/upload`,
-                    Body: "MultipartFormData",
-                    Headers: {
-                        "X-Password": this.#password,
-                    },
-                    FileFormName: "file",
-                    URL: "{json:url}",
-                    ErrorMessage: "{json:error}",
-                };
-
-                return res
-                    .set("Content-Type", "application/octet-stream")
-                    .set(
-                        "Content-Disposition",
-                        "attachment;filename=sharex-server.sxcu"
-                    )
-                    .end(JSON.stringify(sxcu));
-            });
+            this.#server.get(`${this.baseUrl}api/sxcu`, this.#handleSxcu);
         }
 
         // File listing route
         if (this.fileListing) {
             this.#server.get(
                 `${this.baseUrl}${this.fileListing}`,
-                (_req, res) => this.#handleFileListing(_req, res, this.baseUrl)
+                this.#handleFileListing
             );
         }
 
@@ -134,59 +134,6 @@ export class ShareXServer {
                 }`
             );
         });
-
-        // Get file
-        this.#server.get(`${this.baseUrl}:filename`, (req, res) =>
-            this.#getFile(req, res)
-        );
-
-        // Upload file
-        this.#server.post(
-            `${this.baseUrl}api/upload`,
-            //   Make sure only authorized users can upload
-            (req, res, next) => {
-                if (
-                    !req.headers["x-password"] ||
-                    req.headers["x-password"] !== this.#password
-                ) {
-                    this.#debug(`Unauthorized upload attempt from ${req.ip}`);
-                    return res.status(401).end(
-                        JSON.stringify({
-                            error: `Unauthorized. Provide a${
-                                req.headers["x-password"] ? " valid" : ""
-                            } password.`,
-                        })
-                    );
-                }
-                return next();
-            },
-            //   Handle the file upload
-            multer({
-                storage: diskStorage({
-                    destination: (_req, _file, cb) => {
-                        cb(null, this.#fsPath);
-                    },
-                    filename: async (_req, file, cb) => {
-                        let name = nanoid(this.filenameLength);
-                        // Little safeguard to prevent overwriting files (although extremely unlikely https://zelark.github.io/nano-id-cc/)
-                        if (await this.#checkFileExists(name)) {
-                            name = nanoid(this.filenameLength);
-                        }
-
-                        cb(
-                            null,
-                            `${name}${
-                                file.originalname.split(".").length > 1
-                                    ? "." + file.originalname.split(".").pop()
-                                    : ""
-                            }`
-                        );
-                    },
-                }),
-            }).single("file"),
-            // This returns the URL to the user
-            (req, res) => this.#uploadFile(req, res)
-        );
 
         // Start listening
         this.#server.listen(this.port, () => {
@@ -220,35 +167,31 @@ export class ShareXServer {
     async #uploadFile(req: Request, res: Response) {
         if (!req.file) {
             this.#debug(`Upload attempt with no file from ${req.ip}`);
-            return res.status(400).end(
-                JSON.stringify({
-                    error: "No file provided.",
-                })
-            );
+            return res.status(400).json({ error: "No file provided." });
         }
 
         this.#debug(
             `File ${req.file.filename} uploaded successfully by ${req.ip}`
         );
-        return res.end(
-            JSON.stringify({
-                url: `${this.forceHttps ? "https" : req.protocol}://${
-                    req.host
-                }${this.baseUrl}${req.file?.filename}`,
-            })
-        );
+        const url = `
+        ${this.forceHttps ? "https" : req.protocol}://${req.host}
+        ${this.baseUrl}
+        ${req.file?.filename}
+        `;
+        return res.json({ url });
     }
 
-    /** Ensures the save path exists, creates it if it doesn't */
-    async #ensureSavePath(path: string) {
-        this.#debug(`Checking if save path exists at ${path}`);
+    async #ensureSavePath() {
+        this.#debug(`Checking if save path exists at ${this.#fsPath}`);
         try {
-            this.#debug(`Save path does exist at ${path}`);
-            await access(path, constants.F_OK);
+            await access(this.#fsPath, constants.F_OK);
+            this.#debug(`Save path does exist at ${this.#fsPath}`);
         } catch {
-            this.#debug(`Save path does not exist at ${path}, creating...`);
-            await mkdir(path, { recursive: true });
-            this.#debug(`Save path created at ${path}`);
+            this.#debug(
+                `Save path does not exist at ${this.#fsPath}, creating...`
+            );
+            await mkdir(this.#fsPath, { recursive: true });
+            this.#debug(`Save path created at ${this.#fsPath}`);
         }
     }
 
@@ -261,15 +204,16 @@ export class ShareXServer {
         }
     }
 
-    /** Handles file listing requests */
-    async #handleFileListing(_req: Request, res: Response, baseUrl: string) {
-        this.#debug(`File listing requested by ${_req.ip}`);
+    async #handleFileListing(req: Request, res: Response) {
+        this.#debug(`File listing requested by ${req.ip}`);
         const files = await readdir(this.#fsPath);
 
         const list = await Promise.all(
             files.map(
                 async (file: string) =>
-                    `<li><a href="${baseUrl}${file}" target=_blank>${file}</a> - uploaded ${(
+                    `<li><a href="${
+                        this.baseUrl
+                    }${file}" target=_blank>${file}</a> - uploaded ${(
                         await stat(join(this.#fsPath, file))
                     ).mtime.toLocaleString()}</li>`
             )
@@ -280,6 +224,55 @@ export class ShareXServer {
                 ${list.join("\n")}
             </ul>
             `);
+    }
+
+    #handleSxcu(req: Request, res: Response) {
+        this.#debug(`SXCU configuration requested by ${req.ip}`);
+        const sxcu = {
+            Version: "18.0.0",
+            Name: `ShareX Server (${req.host})`,
+            DestinationType: "ImageUploader, TextUploader, FileUploader",
+            RequestMethod: "POST",
+            RequestURL: `${this.forceHttps ? "https" : req.protocol}://${
+                req.host
+            }${this.baseUrl}api/upload`,
+            Body: "MultipartFormData",
+            Headers: {
+                "X-Password": this.#password,
+            },
+            FileFormName: "file",
+            URL: "{json:url}",
+            ErrorMessage: "{json:error}",
+        };
+
+        return res
+            .set("Content-Type", "application/octet-stream")
+            .set(
+                "Content-Disposition",
+                "attachment;filename=sharex-server.sxcu"
+            )
+            .json(sxcu);
+    }
+
+    #checkAuth(req: Request, res: Response, next: NextFunction) {
+        if (
+            !req.headers["x-password"] ||
+            req.headers["x-password"] !== this.#password
+        ) {
+            this.#debug(`Unauthorized upload attempt from ${req.ip}`);
+            return res.status(401).json({
+                error: `Unauthorized. Provide a${
+                    req.headers["x-password"] ? " valid" : ""
+                } password.`,
+            });
+        }
+        return next();
+    }
+
+    #debug(str: string) {
+        if (this.debug) {
+            console.debug("[Debug]", str);
+        }
     }
 }
 
