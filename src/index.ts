@@ -14,7 +14,7 @@ export class ShareXServer {
     public enableSxcu: boolean;
     public debug: boolean;
     public fileListing: string | false;
-    public forceHttps: boolean;
+    public forceHttps: boolean | undefined;
     #server = express();
     #password: string;
     #fsPath: string;
@@ -29,7 +29,7 @@ export class ShareXServer {
         enableSxcu = false,
         fileListing = "files",
         debug = false,
-        forceHttps = false,
+        forceHttps,
         trustProxy,
     }: SharexServerOptions) {
         this.port = port;
@@ -49,9 +49,7 @@ export class ShareXServer {
             : false;
 
         if (trustProxy) {
-            if (this.forceHttps !== true && this.forceHttps !== false) {
-                this.forceHttps = true;
-            }
+            if (this.forceHttps == undefined) this.forceHttps = true;
 
             this.#server.set("trust proxy", true);
         }

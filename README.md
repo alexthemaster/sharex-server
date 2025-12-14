@@ -34,7 +34,7 @@ All options accepted by the `ShareXServer` constructor:
 -   `enableSxcu` (boolean, default `false`) - When `true` the server exposes a simple endpoint to get a downloadable .sxcu at `GET /api/sxcu`.
 -   `fileListing` (string | false, default `files`) - Path to file listing of uploads. Set to `false` to disable the listing.
 -   `debug` (boolean, default `false`) - Enable verbose debug logging to the console.
--   `forceHttps` (boolean, default `false`) - Force HTTPS for return URL (useful when running behind reverse proxy)
+-   `forceHttps` (boolean | undefined) - Force HTTPS for return URL (useful when running behind reverse proxy)
 -   `trustProxy` (boolean, default `false`) - Sets Express trust proxy to true; Useful for getting your X-Forwarded-For IP from reverse proxy when running with debug enabled; Also enables forceHttps if not explicitly set to a boolean
 
 ## 🗒️ Usage notes:
