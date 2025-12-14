@@ -2,6 +2,11 @@
 
 A tiny, self-hosted upload target for ShareX and similar clients. Runs on Node.js and stores uploads on disk.
 
+[![Continuous Integration](https://github.com/alexthemaster/sharex-server/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/alexthemaster/sharex-server/actions/workflows/continuous-integration.yml)
+![Docker Image Size](https://img.shields.io/docker/image-size/alexthemaster/sharex-server)
+![Docker Pulls](https://img.shields.io/docker/pulls/alexthemaster/sharex-server)
+![NPM Downloads](https://img.shields.io/npm/dw/sharex-server)
+
 ## ⭐ Features
 
 -   File uploads (including text, image, GIF, MP4 etc)
