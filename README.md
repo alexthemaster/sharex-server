@@ -88,7 +88,7 @@ curl -X POST "http://localhost:8080/api/upload" \
 
 ## Upload handling and filename strategy
 
--   Filenames are generated as: `${nanoid(this.filenameLength)}.{ext}` where `ext` is the uploaded file's original extension.
--   A collision safeguard checks whether a file with the generated name already exists and regenerates once if necessary. The probability of collision is [extremely low](https://zelark.github.io/nano-id-cc/) with `nanoid`.
+-   Filenames are generated as: `{nanoid(length)}.{ext}` where `ext` uses the uploaded file's original extension if it has one.
+-   A collision safeguard checks whether a file with the generated name already exists and regenerates until successful. The probability of collision is [extremely low](https://zelark.github.io/nano-id-cc/) with `nanoid`.
 
 ---
