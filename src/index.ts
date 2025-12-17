@@ -178,12 +178,11 @@ export class ShareXServer {
         this.#debug(
             `File ${req.file.filename} uploaded successfully by ${req.ip}`
         );
-        const url = `
-        ${this.forceHttps ? "https" : req.protocol}://${req.host}
-        ${this.baseUrl}
-        ${req.file?.filename}
-        `;
-        return res.json({ url });
+        return res.json({
+            url: `${this.forceHttps ? "https" : req.protocol}://${req.host}${
+                this.baseUrl
+            }${req.file?.filename}`,
+        });
     }
 
     async #ensureSavePath() {
