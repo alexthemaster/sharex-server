@@ -1,9 +1,19 @@
+FROM node:lts AS builder 
+WORKDIR /build 
+COPY src ./src
+COPY package*.json ./
+COPY tsconfig.json ./
+RUN npm ci
+RUN npm run build
+
 FROM node:lts-alpine
 
 WORKDIR /server
 
 COPY docker/index.js ./
-RUN npm install sharex-server
+COPY --from=builder /build/dist/ /server/dist/
+
+ENV DEV=true
 
 EXPOSE 8080
 ENV PORT=8080

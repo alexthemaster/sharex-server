@@ -79,6 +79,10 @@ The ShareX Server Docker image can be configured via the following environment v
 
 ## Manual Build
 
-To build the Docker image manually:
+### Production image
 
 `docker build -t sharex-server -f docker/Dockerfile .`
+
+### Development image (for testing local/unpublished changes)
+
+`docker build -t sharex-server -f docker/Dockerfile.dev .`

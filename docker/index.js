@@ -1,5 +1,8 @@
 // @ts-nocheck
-const { ShareXServer } = require("./dist/index.js");
+const { ShareXServer } =
+    process.env.DEV && process.env.DEV == "true"
+        ? require("./dist/index")
+        : require("sharex-server");
 
 new ShareXServer({
     password: process.env.PASSWORD,
