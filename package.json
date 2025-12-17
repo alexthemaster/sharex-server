@@ -1,6 +1,6 @@
 {
     "name": "sharex-server",
-    "version": "2.4.1",
+    "version": "2.4.2",
     "description": "ShareX image and file hosting using Node.js",
     "main": "dist/index.js",
     "scripts": {
