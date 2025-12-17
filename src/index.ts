@@ -18,7 +18,6 @@ export class ShareXServer {
     #server = express();
     #password: string;
     #fsPath: string;
-    #multer;
 
     constructor({
         port = 8080,
@@ -62,26 +61,6 @@ export class ShareXServer {
         }
         this.#password = password;
 
-        this.#multer = multer({
-            storage: diskStorage({
-                destination: (_req, _file, cb) => cb(null, this.#fsPath),
-                filename: async (_req, file, cb) => {
-                    let name = nanoid(this.filenameLength);
-                    const extension =
-                        file.originalname.split(".").length > 1
-                            ? "." + file.originalname.split(".").pop()
-                            : "";
-
-                    // Little safeguard to prevent overwriting files (although extremely unlikely https://zelark.github.io/nano-id-cc/)
-                    if (await this.#checkFileExists(name)) {
-                        name = nanoid(this.filenameLength);
-                    }
-
-                    cb(null, `${name}${extension}`);
-                },
-            }),
-        });
-
         this.#fsPath = join("./", this.savePath);
         this.#ensureSavePath().then(() => this.#startServer());
     }
@@ -112,7 +91,25 @@ export class ShareXServer {
             // Make sure only authorized users can upload
             (req, res, next) => this.#checkAuth(req, res, next),
             // Handle the file upload
-            this.#multer.single("file"),
+            multer({
+                storage: diskStorage({
+                    destination: (_req, _file, cb) => cb(null, this.#fsPath),
+                    filename: async (_req, file, cb) => {
+                        let name = nanoid(this.filenameLength);
+                        const extension =
+                            file.originalname.split(".").length > 1
+                                ? "." + file.originalname.split(".").pop()
+                                : "";
+
+                        // Little safeguard to prevent overwriting files (although extremely unlikely https://zelark.github.io/nano-id-cc/)
+                        if (await this.#checkFileExists(name)) {
+                            name = nanoid(this.filenameLength);
+                        }
+
+                        cb(null, `${name}${extension}`);
+                    },
+                }),
+            }).single("file"),
             // This returns the URL to the user
             (req, res) => this.#uploadFile(req, res)
         );
