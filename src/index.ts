@@ -158,7 +158,13 @@ export class ShareXServer {
 
         this.#debug(`Serving file ${filename} to ${req.ip}`);
         const file = createReadStream(`${this.#fsPath}/${filename}`);
-        res.set("Content-Type", lookup(filename) || "application/octet-stream");
+        const fileStat = await stat(`${this.#fsPath}/${filename}`);
+
+        res.set({
+            "Content-Length": fileStat.size.toString(),
+            "Content-Type": lookup(filename) || "application/octet-stream",
+        });
+
         return file.pipe(res);
     }
 
