@@ -88,7 +88,9 @@ export class ShareXServer {
 
     #startServer() {
         // Get file
-        this.#server.get(`${this.baseUrl}:filename`, this.#getFile);
+        this.#server.get(`${this.baseUrl}:filename`, (req, res) =>
+            this.#getFile(req, res)
+        );
 
         // Upload file
         this.#server.post(
@@ -98,7 +100,7 @@ export class ShareXServer {
             // Handle the file upload
             this.#multer.single("file"),
             // This returns the URL to the user
-            this.#uploadFile
+            (req, res) => this.#uploadFile(req, res)
         );
 
         // SXCU configuration route
@@ -108,9 +110,8 @@ export class ShareXServer {
 
         // File listing route
         if (this.fileListing) {
-            this.#server.get(
-                `${this.baseUrl}${this.fileListing}`,
-                this.#handleFileListing
+            this.#server.get(`${this.baseUrl}${this.fileListing}`, (req, res) =>
+                this.#handleFileListing(req, res)
             );
         }
 
