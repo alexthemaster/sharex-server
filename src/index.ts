@@ -162,6 +162,7 @@ export class ShareXServer {
 
         res.set({
             "Content-Length": fileStat.size.toString(),
+            "Accept-Ranges": "bytes",
             "Content-Type": lookup(filename) || "application/octet-stream",
         });
 
