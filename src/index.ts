@@ -89,7 +89,9 @@ export class ShareXServer {
     #startServer() {
         // SXCU configuration route
         if (this.enableSxcu) {
-            this.#server.get(`${this.baseUrl}api/sxcu`, this.#handleSxcu);
+            this.#server.get(`${this.baseUrl}api/sxcu`, (req, res) =>
+                this.#handleSxcu(req, res)
+            );
         }
 
         // File listing route
@@ -108,7 +110,7 @@ export class ShareXServer {
         this.#server.post(
             `${this.baseUrl}api/upload`,
             // Make sure only authorized users can upload
-            this.#checkAuth,
+            (req, res, next) => this.#checkAuth(req, res, next),
             // Handle the file upload
             this.#multer.single("file"),
             // This returns the URL to the user
