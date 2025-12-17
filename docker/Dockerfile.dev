@@ -10,7 +10,9 @@ FROM node:lts-alpine
 
 WORKDIR /server
 
+COPY package*.json ./
 COPY docker/index.js ./
+RUN npm ci --production
 COPY --from=builder /build/dist/ /server/dist/
 
 ENV DEV=true
