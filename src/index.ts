@@ -87,6 +87,18 @@ export class ShareXServer {
     }
 
     #startServer() {
+        // SXCU configuration route
+        if (this.enableSxcu) {
+            this.#server.get(`${this.baseUrl}api/sxcu`, this.#handleSxcu);
+        }
+
+        // File listing route
+        if (this.fileListing) {
+            this.#server.get(`${this.baseUrl}${this.fileListing}`, (req, res) =>
+                this.#handleFileListing(req, res)
+            );
+        }
+
         // Get file
         this.#server.get(`${this.baseUrl}:filename`, (req, res) =>
             this.#getFile(req, res)
@@ -102,18 +114,6 @@ export class ShareXServer {
             // This returns the URL to the user
             (req, res) => this.#uploadFile(req, res)
         );
-
-        // SXCU configuration route
-        if (this.enableSxcu) {
-            this.#server.get(`${this.baseUrl}api/sxcu`, this.#handleSxcu);
-        }
-
-        // File listing route
-        if (this.fileListing) {
-            this.#server.get(`${this.baseUrl}${this.fileListing}`, (req, res) =>
-                this.#handleFileListing(req, res)
-            );
-        }
 
         // Base route
         this.#server.get(this.baseUrl, (_req, res) => {
