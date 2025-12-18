@@ -8,9 +8,9 @@
         "lint": "npx eslint .",
         "lint:fix": "npx eslint . --fix",
         "build": "rm -rf dist && npx tsc",
-        "test": "npm run build && node --test",
-        "test:nobuild": "node --test",
-        "prepublishOnly": "npm run lint:fix && npm run test"
+        "test": "node --test",
+        "test:build": "npm run build && node --test",
+        "prepublishOnly": "npm run lint:fix && npm run test:build"
     },
     "author": "Alex Kovacs <alex@kvcs.dev>",
     "homepage": "https://github.com/alexthemaster/sharex-server#readme",
