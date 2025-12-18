@@ -148,8 +148,10 @@ describe("API functionality", () => {
         await server.start();
         port = server.port;
 
-        const res = await request(getBaseUrl()).get("/");
-        assert.ok(!res.text.includes("see the file listing"));
+        const res1 = await request(getBaseUrl()).get("/");
+        const res2 = await request(getBaseUrl()).get("/files");
+        assert.ok(!res1.text.includes("see the file listing"));
+        assert.notEqual(res2.status, 200);
     });
 
     test("sxcu config is properly disabled", async () => {
