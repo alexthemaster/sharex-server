@@ -56,10 +56,7 @@ export class ShareXServer {
         }
 
         if (!password) {
-            console.error(
-                "[Error] A password must be provided to start the server."
-            );
-            process.exit(1);
+            throw new Error("A password must be provided to start the server.");
         }
         this.#password = password;
 
