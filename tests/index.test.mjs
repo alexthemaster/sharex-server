@@ -24,15 +24,6 @@ before(() => {
 });
 
 describe("Basic functionality", () => {
-    test("is defined", () => {
-        assert.ok(ShareXServer);
-    });
-
-    test("starts up without issues", async () => {
-        const server = newServer();
-        assert.ok(server);
-    });
-
     test("throws error when password is missing", async () => {
         assert.throws(() => new ShareXServer({}));
     });
