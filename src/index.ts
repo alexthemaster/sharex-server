@@ -17,7 +17,7 @@ export class ShareXServer {
     public fileListing: string | false;
     public forceHttps: boolean | undefined;
     #server = express();
-    #serverListener?: Server;
+    #serverListener: Server | null = null;
     #password: string;
     #fsPath: string;
 
@@ -36,7 +36,7 @@ export class ShareXServer {
         this.port = port;
         // Ensure baseUrl starts and ends with /
         this.baseUrl =
-            baseUrl == "/" ? baseUrl : `/${baseUrl.replace("/", "")}/`;
+            baseUrl == "/" ? baseUrl : `/${baseUrl.replaceAll("/", "")}/`;
         this.savePath = savePath;
         this.filenameLength = filenameLength;
         this.enableSxcu = enableSxcu;
@@ -138,21 +138,48 @@ export class ShareXServer {
     }
 
     /** Start the server and listenn on the user defined port */
-    async start() {
+    async start(): Promise<void> {
         if (this.#serverListener)
             throw new Error("[Error] Server already started");
 
         await this.#ensureSavePath();
 
-        this.#serverListener = this.#server.listen(this.port, () => {
-            console.log(`[Info] ShareX server started on port ${this.port}`);
+        return new Promise((resolve, reject) => {
+            this.#serverListener = this.#server.listen(this.port, () => {
+                // If port is 0, reflect changes to randomly selected port in the object
+                if (this.port == 0) {
+                    const addr = this.#serverListener?.address();
+                    if (addr && typeof addr == "object") {
+                        this.port = addr.port;
+                    }
+                }
+
+                console.log(
+                    `[Info] ShareX server started on port ${this.port}`
+                );
+
+                resolve();
+            });
+
+            this.#serverListener.once("error", (err) => {
+                console.error(
+                    `[Error] Something went wrong when starting the server: ${err.message}`
+                );
+                reject(err);
+                this.#serverListener = null;
+            });
         });
     }
 
     /** Stop the server */
-    stop() {
-        if (!this.#serverListener) return;
-        this.#serverListener.close();
+    async stop(): Promise<void> {
+        return new Promise((resolve) => {
+            if (!this.#serverListener) return resolve();
+            this.#serverListener.close(() => {
+                this.#serverListener = null;
+                return resolve();
+            });
+        });
     }
 
     /** Streams a requested file to the client if it exists */
