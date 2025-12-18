@@ -24,6 +24,7 @@
         "sharex",
         "sharex-server",
         "sharex server",
+        "sharex file server",
         "sharex image server"
     ],
     "license": "MIT",
