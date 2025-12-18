@@ -206,7 +206,12 @@ describe("API functionality", () => {
             .post("/api/upload")
             .set("X-Password", password)
             .attach("file", Buffer.from("test"), "filename.txt");
-        assert.ok(res.statusCode == 200 && "url" in JSON.parse(res.text));
+        const { url } = JSON.parse(res.text);
+        assert.equal(res.statusCode, 200);
+        assert.ok(url);
+
+        const file = await request("").get(url);
+        assert.equal(file.text, "test");
     });
 
     test("/api/upload returns 400 if no file is provided", async () => {
