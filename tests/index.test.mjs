@@ -190,7 +190,7 @@ describe("API functionality", () => {
         assert.equal(res.statusCode, 404);
     });
 
-    test("/api/upload", async () => {
+    test("/api/upload works", async () => {
         const server = new ShareXServer({
             port: 0,
             password,
@@ -207,7 +207,7 @@ describe("API functionality", () => {
         assert.ok(res.statusCode == 200 && "url" in JSON.parse(res.text));
     });
 
-    test("/api/upload no file", async () => {
+    test("/api/upload returns 400 if no file is provided", async () => {
         const server = new ShareXServer({
             port: 0,
             password,
@@ -223,7 +223,7 @@ describe("API functionality", () => {
         assert.equal(res.statusCode, 400);
     });
 
-    test("/api/upload wrong password", async () => {
+    test("/api/upload returns 401 if wrong password is used", async () => {
         const server = new ShareXServer({
             port: 0,
             password,
