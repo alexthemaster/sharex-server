@@ -8,7 +8,8 @@
         "lint": "npx eslint .",
         "lint:fix": "npx eslint . --fix",
         "build": "rm -rf dist && npx tsc",
-        "test": "node --test"
+        "test": "npm run build && node --test",
+        "test:nobuild": "node --test"
     },
     "author": "Alex Kovacs <alex@kvcs.dev>",
     "homepage": "https://github.com/alexthemaster/sharex-server#readme",
