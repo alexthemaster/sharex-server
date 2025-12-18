@@ -138,14 +138,14 @@ export class ShareXServer {
     }
 
     /** Start the server and listenn on the user defined port */
-    async start(): Promise<void> {
+    async start(): Promise<void | Error> {
         if (this.#serverListener)
             throw new Error("[Error] Server already started");
 
         await this.#ensureSavePath();
 
         return new Promise((resolve, reject) => {
-            this.#serverListener = this.#server.listen(this.port, () => {
+            this.#serverListener = this.#server.listen(this.port, (err) => {
                 // If port is 0, reflect changes to randomly selected port in the object
                 if (this.port == 0) {
                     const addr = this.#serverListener?.address();
@@ -154,17 +154,20 @@ export class ShareXServer {
                     }
                 }
 
+                if (err) {
+                    console.error(
+                        `[Error] Something went wrong when starting the server: ${err.message}`
+                    );
+                    reject(err);
+                }
+
                 console.log(
                     `[Info] ShareX server started on port ${this.port}`
                 );
-
                 resolve();
             });
 
             this.#serverListener.once("error", (err) => {
-                console.error(
-                    `[Error] Something went wrong when starting the server: ${err.message}`
-                );
                 reject(err);
                 this.#serverListener = null;
             });
