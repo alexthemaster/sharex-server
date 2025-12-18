@@ -19,4 +19,4 @@ new ShareXServer({
             ? false
             : process.env.FILE_LISTING,
     debug: JSON.parse(process.env.DEBUG.toLowerCase()) ?? false,
-});
+}).start();
