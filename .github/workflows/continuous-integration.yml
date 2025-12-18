@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   build:
-    name: Build and Lint code
+    name: Build, Lint and Test code
     runs-on: ubuntu-latest
 
     steps:
@@ -24,3 +24,6 @@ jobs:
 
       - name: Build code
         run: npm run build
+
+      - name: Test code
+        run: npm run test:nobuild
