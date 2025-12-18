@@ -4,6 +4,7 @@ import multer, { diskStorage } from "multer";
 import { nanoid } from "nanoid";
 import { createReadStream } from "node:fs";
 import { access, constants, mkdir, readdir, stat } from "node:fs/promises";
+import { type Server } from "node:http";
 import { join } from "node:path";
 
 export class ShareXServer {
@@ -16,6 +17,7 @@ export class ShareXServer {
     public fileListing: string | false;
     public forceHttps: boolean | undefined;
     #server = express();
+    #serverListener?: Server;
     #password: string;
     #fsPath: string;
 
@@ -62,10 +64,11 @@ export class ShareXServer {
         this.#password = password;
 
         this.#fsPath = join("./", this.savePath);
-        this.#ensureSavePath().then(() => this.#startServer());
+
+        this.#setupRoutes();
     }
 
-    #startServer() {
+    #setupRoutes() {
         // SXCU configuration route
         if (this.enableSxcu) {
             this.#server.get(`${this.baseUrl}api/sxcu`, (req, res) =>
@@ -132,11 +135,24 @@ export class ShareXServer {
                 }`
             );
         });
+    }
 
-        // Start listening
-        this.#server.listen(this.port, () => {
+    /** Start the server and listenn on the user defined port */
+    async start() {
+        if (this.#serverListener)
+            throw new Error("[Error] Server already started");
+
+        await this.#ensureSavePath();
+
+        this.#serverListener = this.#server.listen(this.port, () => {
             console.log(`[Info] ShareX server started on port ${this.port}`);
         });
+    }
+
+    /** Stop the server */
+    stop() {
+        if (!this.#serverListener) return;
+        this.#serverListener.close();
     }
 
     /** Streams a requested file to the client if it exists */
