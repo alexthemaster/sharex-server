@@ -26,4 +26,4 @@ jobs:
         run: npm run build
 
       - name: Test code
-        run: npm run test:nobuild
+        run: npm run test
