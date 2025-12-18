@@ -190,7 +190,6 @@ export class ShareXServer {
             return res.status(400).send("No filename provided.");
         }
 
-        this.#debug(`File ${filename} requested by ${req.ip}`);
         const exists = await this.#checkFileExists(filename);
 
         if (!exists) {
@@ -198,15 +197,47 @@ export class ShareXServer {
             return res.status(404).send("The requested file does not exist.");
         }
 
-        this.#debug(`Serving file ${filename} to ${req.ip}`);
-        const file = createReadStream(`${this.#fsPath}/${filename}`);
         const fileStat = await stat(`${this.#fsPath}/${filename}`);
+
+        let status = 200;
+        let start = 0;
+        let end = fileStat.size;
+        const additionalHeaders: {
+            "Content-Range"?: string;
+            "Accept-Ranges"?: "bytes";
+        } = {};
+
+        if (req.header("Range")) {
+            const range = req.range(fileStat.size);
+            if (range && range !== -1 && range !== -2 && range[0]) {
+                status = 206;
+                start = range[0].start;
+                end = range[0].end;
+                additionalHeaders[
+                    "Content-Range"
+                ] = `bytes ${start}-${end}/${fileStat.size}`;
+                additionalHeaders["Accept-Ranges"] = "bytes";
+            }
+        }
 
         res.set({
             "Content-Length": fileStat.size.toString(),
-            "Accept-Ranges": "bytes",
             "Content-Type": lookup(filename) || "application/octet-stream",
+
+            ...additionalHeaders,
+        }).status(status);
+
+        const file = createReadStream(`${this.#fsPath}/${filename}`, {
+            start,
+            end,
         });
+
+        if (end == fileStat.size)
+            this.#debug(`Serving file ${filename} to ${req.ip}`);
+        else
+            this.#debug(
+                `Streaming file ${filename} to ${req.ip} (range: ${start}-${end})`
+            );
 
         return file.pipe(res);
     }
